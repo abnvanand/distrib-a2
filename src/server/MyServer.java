@@ -6,6 +6,9 @@ import common.MyStreamSocket;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 
 public class MyServer {
@@ -35,10 +38,35 @@ public class MyServer {
                     uploadFile(dataSocket);
                 } else if (Constants.MessageTypes.CREATE_FOLDER.equals(msgType)) {
                     createFolder(dataSocket);
+                } else if (Constants.MessageTypes.MOVE_FILE.equals(msgType)) {
+                    moveFile(dataSocket);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void moveFile(MyStreamSocket dataSocket) throws IOException {
+        String source = dataSocket.receiveMessage();
+        String destination = dataSocket.receiveMessage();
+
+        Path temp = null;
+        try {
+            temp = Files.move
+                    (Paths.get(source),
+                            Paths.get(destination));
+        } catch (IOException e) {
+            // TODO: make error msg more user freindly
+            e.printStackTrace();
+        }
+
+        if (temp != null) {
+            System.out.println("File renamed and moved successfully");
+            dataSocket.sendMessage("Success");
+        } else {
+            System.out.println("Failed to move the file");
+            dataSocket.sendMessage("Failed");
         }
     }
 

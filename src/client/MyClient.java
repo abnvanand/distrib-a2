@@ -20,10 +20,23 @@ public class MyClient {
 //            String filename = "/home/abnv/Videos/tutorials/Compilers/videos/1-18/1 - 1 - 01-01- Introduction (8m20s).mp4";
 //            uploadFile(dataSocket, filename);
 
-            createFolder(dataSocket, "Apps");
+//            createFolder(dataSocket, "Apps");
+
+            String source = "newfile.mp4";
+            String destination = "Apps/newfile.mp4";
+            moveFile(dataSocket, source, destination);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void moveFile(MyStreamSocket dataSocket, String source, String destination)
+            throws IOException {
+        dataSocket.sendMessage(Constants.MessageTypes.MOVE_FILE);
+        dataSocket.sendMessage(source);
+        dataSocket.sendMessage(destination);
+        System.out.println(dataSocket.receiveMessage());
     }
 
     private static void createFolder(MyStreamSocket dataSocket, String folderName) throws IOException {
