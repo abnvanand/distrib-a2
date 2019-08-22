@@ -64,4 +64,20 @@ public class MyStreamSocket extends Socket {
         fis.close();
 //        dataOutputStream.close(); // DONOT close DOS as one client won't be able to send multiple files
     }
+
+    public void sendObject(Object groups)
+            throws IOException {
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(dataOutputStream);
+        objectOutputStream.writeObject(groups);
+        objectOutputStream.flush();
+        objectOutputStream.close();
+    }
+
+    public Object receiveObject()
+            throws IOException, ClassNotFoundException {
+        ObjectInputStream objectInputStream = new ObjectInputStream(dataInputStream);
+        Object returnVal = objectInputStream.readObject();
+        objectInputStream.close();
+        return returnVal;
+    }
 }

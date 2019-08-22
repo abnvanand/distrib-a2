@@ -9,5 +9,6 @@ public class Constants {
         public static final String MOVE_FILE = "move_file";
 
         public static final String CREATE_GROUP = "create_group";
+        public static final String LIST_GROUPS = "list_groups";
     }
 }

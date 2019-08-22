@@ -4,6 +4,7 @@ import common.Constants;
 import common.MyStreamSocket;
 
 import java.io.IOException;
+import java.util.HashSet;
 
 public class MyClient {
     public static void main(String[] args) {
@@ -15,7 +16,7 @@ public class MyClient {
                     serverHost, serverPort);
 
             // TODO: make menu driven
-            createUser(dataSocket);
+//            createUser(dataSocket);
 
 //            String filename = "/home/abnv/Videos/tutorials/Compilers/videos/1-18/1 - 1 - 01-01- Introduction (8m20s).mp4";
 //            uploadFile(dataSocket, filename);
@@ -26,11 +27,24 @@ public class MyClient {
 //            String destination = "Apps/newfile.mp4";
 //            moveFile(dataSocket, source, destination);
 
-            String groupName = "DS";
-            createGroup(dataSocket, groupName);
+//            String groupName = "DS";
+//            createGroup(dataSocket, groupName);
+            listGroups(dataSocket);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void listGroups(MyStreamSocket dataSocket)
+            throws IOException {
+        dataSocket.sendMessage(Constants.MessageTypes.LIST_GROUPS);
+        HashSet<String> groups = null;
+        try {
+            groups = (HashSet<String>) dataSocket.receiveObject();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        System.out.println(groups.toString());
     }
 
     private static void createGroup(MyStreamSocket dataSocket, String groupName) throws IOException {

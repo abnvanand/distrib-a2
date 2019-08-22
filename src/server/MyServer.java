@@ -45,11 +45,18 @@ public class MyServer {
                 } else if (Constants.MessageTypes.CREATE_GROUP.equals(msgType)) {
                     createGroup(dataSocket);
                 }
+                else if(Constants.MessageTypes.LIST_GROUPS.equals(msgType)) {
+                    listGroups(dataSocket);
+                }
                 dataSocket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void listGroups(MyStreamSocket dataSocket) throws IOException {
+        dataSocket.sendObject(groups);
     }
 
     private static void createGroup(MyStreamSocket dataSocket) throws IOException {
