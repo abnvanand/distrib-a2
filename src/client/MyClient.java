@@ -15,20 +15,28 @@ public class MyClient {
                     serverHost, serverPort);
 
             // TODO: make menu driven
-//            createUser(dataSocket);
+            createUser(dataSocket);
 
 //            String filename = "/home/abnv/Videos/tutorials/Compilers/videos/1-18/1 - 1 - 01-01- Introduction (8m20s).mp4";
 //            uploadFile(dataSocket, filename);
 
 //            createFolder(dataSocket, "Apps");
 
-            String source = "newfile.mp4";
-            String destination = "Apps/newfile.mp4";
-            moveFile(dataSocket, source, destination);
+//            String source = "newfile.mp4";
+//            String destination = "Apps/newfile.mp4";
+//            moveFile(dataSocket, source, destination);
 
+            String groupName = "DS";
+            createGroup(dataSocket, groupName);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void createGroup(MyStreamSocket dataSocket, String groupName) throws IOException {
+        dataSocket.sendMessage(Constants.MessageTypes.CREATE_GROUP);
+        dataSocket.sendMessage(groupName);
+        System.out.println(dataSocket.receiveMessage());
     }
 
     private static void moveFile(MyStreamSocket dataSocket, String source, String destination)

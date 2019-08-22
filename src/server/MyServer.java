@@ -13,10 +13,12 @@ import java.util.HashSet;
 
 public class MyServer {
     private static HashSet<String> userNames;
+    private static HashSet<String> groups;
 
     public static void main(String[] args) {
         int serverPort = 12345;
         userNames = new HashSet<>();
+        groups = new HashSet<>();
 
         try {
             ServerSocket myConnectionSocket = new ServerSocket(serverPort);
@@ -40,14 +42,30 @@ public class MyServer {
                     createFolder(dataSocket);
                 } else if (Constants.MessageTypes.MOVE_FILE.equals(msgType)) {
                     moveFile(dataSocket);
+                } else if (Constants.MessageTypes.CREATE_GROUP.equals(msgType)) {
+                    createGroup(dataSocket);
                 }
+                dataSocket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private static void createGroup(MyStreamSocket dataSocket) throws IOException {
+        String groupName = dataSocket.receiveMessage();
+        if (groups.contains(groupName)) {
+            System.out.println("Group " + groupName + " already exists.");
+            dataSocket.sendMessage("Error: group already exists");
+        } else {
+            groups.add(groupName);
+            System.out.println("Group " + groupName + " created successfully.");
+            dataSocket.sendMessage("Success");
+        }
+    }
+
     private static void moveFile(MyStreamSocket dataSocket) throws IOException {
+        // TODO: Do without nio?
         String source = dataSocket.receiveMessage();
         String destination = dataSocket.receiveMessage();
 
