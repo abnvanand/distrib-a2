@@ -1,9 +1,9 @@
 package client;
 
 import common.Constants;
+import common.MyStreamSocket;
 
-import java.io.*;
-import java.net.Socket;
+import java.io.IOException;
 
 public class MyClient {
     public static void main(String[] args) {
@@ -11,46 +11,32 @@ public class MyClient {
         Integer serverPort = Integer.parseInt("12345");
 
         try {
-            Socket dataSocket = new Socket(serverHost, serverPort);
-            OutputStream outputStream = dataSocket.getOutputStream();
-            PrintWriter output = new PrintWriter(new OutputStreamWriter(outputStream));
-            InputStream inputStream = dataSocket.getInputStream();
-            BufferedReader input = new BufferedReader(new InputStreamReader(inputStream));
+            MyStreamSocket dataSocket = new MyStreamSocket(
+                    serverHost, serverPort);
 
             // TODO: make menu driven
-//            createUser(input, output);
-            uploadFile(dataSocket, output);
-
+            createUser(dataSocket);
+            String filename = "/home/abnv/Videos/tutorials/Compilers/videos/1-18/1 - 1 - 01-01- Introduction (8m20s).mp4";
+            uploadFile(dataSocket, filename);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
-    private static void uploadFile(Socket dataSocket, PrintWriter output) throws IOException {
-        output.println(Constants.MessageTypes.UPLOAD_FILE);
-        output.flush();
-
-        FileInputStream fis = new FileInputStream("/home/abnv/Videos/tutorials/CCNA/01 - CCNA R and S Exam Course - Introduction.mp4");
-        DataOutputStream dos = new DataOutputStream(dataSocket.getOutputStream());
-        byte[] buffer = new byte[8192];
-        int count;
-        while ((count = fis.read(buffer)) > 0) {
-            System.out.println("writing buffer to stream");
-            dos.write(buffer, 0, count);
-            dos.flush();
-        }
-        dos.close();
+    private static void uploadFile(MyStreamSocket dataSocket, String filename) throws IOException {
+        // TODO: Accept filepath
+        dataSocket.sendMessage(Constants.MessageTypes.UPLOAD_FILE);
+        dataSocket.sendFile(filename);
     }
 
-    private static void createUser(BufferedReader input, PrintWriter output) throws IOException {
-        output.println(Constants.MessageTypes.CREATE_USER);
-        output.println("abhinav");
-        output.flush();
+    private static void createUser(MyStreamSocket dataSocket) throws IOException {
+        dataSocket.sendMessage(Constants.MessageTypes.CREATE_USER);
+        // TODO: Accept username
+        dataSocket.sendMessage("abhinav");
 
         // response contains whether the command was successful or not
         // so that the client may take further steps
-        String response = input.readLine();
+        String response = dataSocket.receiveMessage();
         System.out.println(response);
     }
 }

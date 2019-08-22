@@ -1,14 +1,14 @@
 package server;
 
 import common.Constants;
+import common.MyStreamSocket;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.HashSet;
 
 public class MyServer {
-    static HashSet<String> userNames;
+    private static HashSet<String> userNames;
 
     public static void main(String[] args) {
         int serverPort = 12345;
@@ -21,25 +21,17 @@ public class MyServer {
             while (true) {
                 // Wait for a connection
                 System.out.println("Waiting for a connection");
-                Socket dataSocket = myConnectionSocket.accept();    // Accept() is a blocking call
+                MyStreamSocket dataSocket = new MyStreamSocket(myConnectionSocket.accept()); // Accept() is a blocking call
                 System.out.println("Connection accepted");
-
-                OutputStream outputStream = dataSocket.getOutputStream();
-                PrintWriter output = new PrintWriter(new OutputStreamWriter(outputStream));
-
-                InputStream inputStream = dataSocket.getInputStream();
-                BufferedReader input = new BufferedReader(new InputStreamReader(inputStream));
 
                 // Message is received in the form of multiple lines
                 // First line specifies message type
-                String msgType = input.readLine();
+                String msgType = dataSocket.receiveMessage();
                 System.out.println(" input.readLine(): " + msgType);
                 if (Constants.MessageTypes.CREATE_USER.equals(msgType)) {
-                    createUser(output, input);
+                    createUser(dataSocket);
                 } else if (Constants.MessageTypes.UPLOAD_FILE.equals(msgType)) {
-                    DataInputStream dis = new DataInputStream(inputStream);
-                    FileOutputStream fos = new FileOutputStream("newfile.mp4");
-                    uploadFile(dis, fos);
+                    uploadFile(dataSocket);
                 }
             }
         } catch (IOException e) {
@@ -47,29 +39,22 @@ public class MyServer {
         }
     }
 
-    private static void uploadFile(DataInputStream input, FileOutputStream output)
+    private static void uploadFile(MyStreamSocket dataSocket)
             throws IOException {
-        int count;
-        byte[] buffer = new byte[8192];
-        while ((count = input.read(buffer)) > 0) {
-            output.write(buffer, 0, count);
-            output.flush();
-        }
-        output.close();
+        // TODO: Accept file name from client
+        dataSocket.receiveFile("newfile.mp4");
     }
 
-    private static void createUser(PrintWriter output, BufferedReader input) throws IOException {
+    private static void createUser(MyStreamSocket dataSocket) throws IOException {
         System.out.println("Create user request received.");
-        String newUser = input.readLine();
+        String newUser = dataSocket.receiveMessage();
         if (userNames.contains(newUser)) {
             System.out.println("User exists");
-            output.println("Error: user already exists.");
-            output.flush();
+            dataSocket.sendMessage("Error: user already exists.");
         } else {
             userNames.add(newUser);
             System.out.println("User created: " + newUser);
-            output.println("Success: user " + newUser + " created successfully.");
-            output.flush();
+            dataSocket.sendMessage("Success: user " + newUser + " created successfully.");
         }
     }
 }
