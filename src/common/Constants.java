@@ -1,7 +1,7 @@
 package common;
 
 public class Constants {
-    public class MessageTypes {
+    public static class MessageTypes {
         public static final String CREATE_USER = "create_user";
 
         public static final String UPLOAD_FILE = "upload";
@@ -13,7 +13,10 @@ public class Constants {
         public static final String JOIN_GROUP = "join_group";
         public static final String LEAVE_GROUP = "leave_group";
         public static final String LIST_DETAIL = "list_detail";
+        public static final String GET_FILE = "get_file";
 
         public static final String QUIT = "quit";
     }
+
+    public static final String UPLOAD_PATH = "uploads";
 }

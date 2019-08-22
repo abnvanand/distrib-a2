@@ -9,6 +9,8 @@ public class MyStreamSocket extends Socket {
     private PrintWriter printWriter;
     private DataInputStream dataInputStream;
     private DataOutputStream dataOutputStream;
+    ObjectOutputStream objectOutputStream;
+    ObjectInputStream objectInputStream;
 
     public MyStreamSocket(String acceptorHost, int acceptorPort) throws IOException {
         this.dataSocket = new Socket(acceptorHost, acceptorPort);
@@ -29,6 +31,9 @@ public class MyStreamSocket extends Socket {
 
         this.dataInputStream = new DataInputStream(inStream);
         this.dataOutputStream = new DataOutputStream(outStream);
+
+        objectOutputStream = new ObjectOutputStream(dataOutputStream);
+        objectInputStream = new ObjectInputStream(dataInputStream);
     }
 
     public void sendMessage(String message) {
@@ -40,15 +45,18 @@ public class MyStreamSocket extends Socket {
         return this.bufferedReader.readLine();
     }
 
-    public void receiveFile(String fileName) throws IOException {
-        FileOutputStream writeToDisk = new FileOutputStream(fileName);
+    public void receiveFile(String newFileName, long numBytes) throws IOException {
+        FileOutputStream writeToDisk = new FileOutputStream(newFileName);
 
         int count;
         byte[] buffer = new byte[8192];
-        while ((count = this.dataInputStream.read(buffer)) > 0) {
+        long bytesRead = 0;
+        while ((bytesRead < numBytes) && ((count = dataInputStream.read(buffer)) > 0)) {
+            bytesRead += count;
             writeToDisk.write(buffer, 0, count);
             writeToDisk.flush();
         }
+        writeToDisk.flush();
         writeToDisk.close();
     }
 
@@ -57,27 +65,26 @@ public class MyStreamSocket extends Socket {
         byte[] buffer = new byte[8192];
         int count;
         while ((count = fis.read(buffer)) > 0) {
-            System.out.println("writing buffer to stream");
             dataOutputStream.write(buffer, 0, count);
             dataOutputStream.flush();
         }
+        dataOutputStream.flush();
+
         fis.close();
 //        dataOutputStream.close(); // DONOT close DOS as one client won't be able to send multiple files
     }
 
     public void sendObject(Object groups)
             throws IOException {
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(dataOutputStream);
         objectOutputStream.writeObject(groups);
         objectOutputStream.flush();
-        objectOutputStream.close();
+//        objectOutputStream.close();
     }
 
     public Object receiveObject()
             throws IOException, ClassNotFoundException {
-        ObjectInputStream objectInputStream = new ObjectInputStream(dataInputStream);
         Object returnVal = objectInputStream.readObject();
-        objectInputStream.close();
+//        objectInputStream.close();
         return returnVal;
     }
 }

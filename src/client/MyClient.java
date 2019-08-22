@@ -6,8 +6,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
+import static common.Constants.UPLOAD_PATH;
+
 public class MyClient {
     public static void main(String[] args) {
+        File uploadFolder = new File(UPLOAD_PATH);
+        uploadFolder.mkdir();
+
         Scanner in = new Scanner(System.in);
 
         System.out.println("Enter server hostname (default localhost)");
@@ -28,7 +33,8 @@ public class MyClient {
                 System.out.println("Enter command in a single line `quit` to end the session");
                 String command = in.nextLine();
                 String[] split = command.split(" ");
-
+                System.out.println("command: " + command);
+                System.out.println("Splits: " + split);
                 String msgType = split[0];
                 if (Constants.MessageTypes.QUIT.equalsIgnoreCase(split[0])) {
                     helper.done();
@@ -41,7 +47,8 @@ public class MyClient {
 
                 } else if (Constants.MessageTypes.UPLOAD_FILE.equals(msgType)) {
                     File f = new File(split[1]);
-                    helper.uploadFile(helper.getMyUserName(), f.getName(), split[1]);
+
+                    helper.uploadFile(helper.getMyUserName(), f.getName(), split[1], f.length());
 
                 } else if (Constants.MessageTypes.CREATE_FOLDER.equals(msgType)) {
                     helper.createFolder(helper.getMyUserName(), split[1]);
@@ -64,6 +71,12 @@ public class MyClient {
                 } else if (Constants.MessageTypes.LIST_DETAIL.equals(msgType)) {
                     helper.listDetail(split[1]);
 
+                } else if (Constants.MessageTypes.GET_FILE.equals(msgType)) {
+                    String[] pathSplits = split[1].split("/");
+                    String groupName = pathSplits[0];
+                    String userName = pathSplits[1];
+                    String filePath = pathSplits[2];
+                    helper.getFile(groupName, userName, filePath);
                 }
             }
         } catch (IOException e) {

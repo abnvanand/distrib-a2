@@ -12,6 +12,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import static common.Constants.UPLOAD_PATH;
+
 public class MyServer {
     private static HashSet<String> userNames;
     private static HashSet<String> groups;
@@ -70,6 +72,26 @@ public class MyServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void getFile(MyStreamSocket dataSocket)
+            throws IOException {
+        String groupName = dataSocket.receiveMessage();
+        String userName = dataSocket.receiveMessage();
+        String filePath = dataSocket.receiveMessage();
+        if (!groups.contains(groupName)) {
+            System.out.println("Group " + groupName + " does not exist.");
+            dataSocket.sendMessage("error");
+            return;
+        }
+        if (!userNames.contains(userName)) {
+            System.out.println("User " + userName + " does not exist.");
+            dataSocket.sendMessage("error");
+            return;
+        }
+        String fullyQualifiedPath = String.format("%s/%s/%s", UPLOAD_PATH, userName, filePath);
+        System.out.println("Sending file: " + fullyQualifiedPath);
+        dataSocket.sendFile(fullyQualifiedPath);
     }
 
     private static void listDetail(MyStreamSocket dataSocket)
@@ -156,8 +178,8 @@ public class MyServer {
         Path temp = null;
         try {
             temp = Files.move
-                    (Paths.get(source),
-                            Paths.get(destination));
+                    (Paths.get(String.format("%s/%s/%s", UPLOAD_PATH, userName, source)),
+                            Paths.get(String.format("%s/%s/%s", UPLOAD_PATH, userName, destination)));
         } catch (IOException e) {
             // TODO: make error msg more user friendly
             e.printStackTrace();
@@ -178,7 +200,7 @@ public class MyServer {
     private static void createFolder(MyStreamSocket dataSocket) throws IOException {
         String userName = dataSocket.receiveMessage();
         String folderName = dataSocket.receiveMessage();
-        File dir = new File(folderName);
+        File dir = new File(String.format("%s/%s/%s", UPLOAD_PATH, userName, folderName));
 
         // attempt to create the directory here
         boolean success = dir.mkdir();
@@ -200,9 +222,17 @@ public class MyServer {
             throws IOException {
         String userName = dataSocket.receiveMessage();
         String fileName = dataSocket.receiveMessage();  // filename with which it will be saved on the server
-        dataSocket.receiveFile(fileName);
+        String fileSize = dataSocket.receiveMessage();
+
+        String fullPath = String.format("%s/%s/%s", UPLOAD_PATH, userName, fileName);
+        System.out.println("Uploading file to: " + fullPath);
+
+        dataSocket.receiveFile(fullPath, Long.parseLong(fileSize));
+
         userFilesMapping.putIfAbsent(userName, new HashSet<>());
         userFilesMapping.get(userName).add(fileName);
+
+        System.out.println("Uploaded file to: " + fullPath);
     }
 
     private static void createUser(MyStreamSocket dataSocket)
@@ -214,6 +244,14 @@ public class MyServer {
             dataSocket.sendMessage("Error");
         } else {
             userNames.add(newUser);
+            // Create a user folder
+            File dir = new File(String.format("%s/%s/", UPLOAD_PATH, newUser));
+            if (dir.mkdir()) {
+                System.out.println("Root directory for user " + newUser + " created successfully");
+            } else {
+                System.out.println("Root directory for user " + newUser + " could not be created.");
+            }
+
             System.out.println("User created: " + newUser);
             dataSocket.sendMessage("Success: user " + newUser + " created successfully.");
         }

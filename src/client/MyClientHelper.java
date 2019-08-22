@@ -3,6 +3,7 @@ package client;
 import common.Constants;
 import common.MyStreamSocket;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +19,22 @@ public class MyClientHelper {
 
     public String getMyUserName() {
         return myUserName;
+    }
+
+    public void getFile(String groupName, String userName, String filePath)
+            throws IOException {
+        this.dataSocket.sendMessage(groupName);
+        this.dataSocket.sendMessage(userName);
+        this.dataSocket.sendMessage(filePath);
+        // receives whether file exists or not
+        String response = this.dataSocket.receiveMessage();
+        if (response.equalsIgnoreCase("error")) {
+            System.out.println("Error: invalid file referred");
+            return;
+        }
+        System.out.println(String.format("Receiving file: %s/%s", userName, filePath));
+        File file = new File(filePath);
+        this.dataSocket.receiveFile(file.getName(), file.length());
     }
 
     public void listDetail(String groupName)
@@ -56,10 +73,10 @@ public class MyClientHelper {
         HashSet<String> groups = null;
         try {
             groups = (HashSet<String>) this.dataSocket.receiveObject();
+            System.out.println(groups.toString());
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        System.out.println(groups.toString());
     }
 
     public void createGroup(String groupName) throws IOException {
@@ -87,11 +104,13 @@ public class MyClientHelper {
         System.out.println(response);
     }
 
-    public void uploadFile(String userName, String fileName, String filePath)
+    public void uploadFile(String userName, String fileName, String filePath, long fileSize)
             throws IOException {
         this.dataSocket.sendMessage(Constants.MessageTypes.UPLOAD_FILE);
         this.dataSocket.sendMessage(userName);
         this.dataSocket.sendMessage(fileName);
+        this.dataSocket.sendMessage(String.valueOf(fileSize));
+        System.out.println("Sending file: " + filePath);
         this.dataSocket.sendFile(filePath);
     }
 
