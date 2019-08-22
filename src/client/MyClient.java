@@ -4,6 +4,7 @@ import common.Constants;
 import common.MyStreamSocket;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class MyClient {
@@ -40,11 +41,27 @@ public class MyClient {
 //            joinGroup(dataSocket, "shubham","mango");
 //            joinGroup(dataSocket, "rawat","apple");
 //            joinGroup(dataSocket, "rawat","mango");
-            leaveGroup(dataSocket, "abhinav",
-                    "mango");
+//            leaveGroup(dataSocket, "abhinav",
+//                    "mango");
+            listDetail(dataSocket, "mango");
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void listDetail(MyStreamSocket dataSocket,
+                                   String groupName)
+            throws IOException {
+        dataSocket.sendMessage(Constants.MessageTypes.LIST_DETAIL);
+        dataSocket.sendMessage(groupName);
+        HashMap<String, HashSet<String>> filteredUserFiles =
+                null;
+        try {
+            filteredUserFiles = (HashMap<String, HashSet<String>>) dataSocket.receiveObject();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        System.out.println(filteredUserFiles);
     }
 
     private static void leaveGroup(MyStreamSocket dataSocket,

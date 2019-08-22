@@ -17,12 +17,15 @@ public class MyServer {
     private static HashSet<String> groups;
     // <Groupname, Users>
     private static HashMap<String, HashSet<String>> groupUsersMapping;
+    // <Username, filepaths>
+    private static HashMap<String, HashSet<String>> userFilesMapping;
 
     public static void main(String[] args) {
         int serverPort = 12345;
         userNames = new HashSet<>();
         groups = new HashSet<>();
         groupUsersMapping = new HashMap<>();
+        userFilesMapping = new HashMap<>();
 
         try {
             ServerSocket myConnectionSocket = new ServerSocket(serverPort);
@@ -54,12 +57,32 @@ public class MyServer {
                     joinGroup(dataSocket);
                 } else if (Constants.MessageTypes.LEAVE_GROUP.equals(msgType)) {
                     leaveGroup(dataSocket);
+                } else if (Constants.MessageTypes.LIST_DETAIL.equals(msgType)) {
+                    listDetail(dataSocket);
                 }
-                dataSocket.close();
+//                dataSocket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void listDetail(MyStreamSocket dataSocket)
+            throws IOException {
+        String groupName = dataSocket.receiveMessage();
+//        if (!groups.contains(groupName)) {
+        // TODO: send error back to client or empty list
+//            return;
+//        }
+        HashMap<String, HashSet<String>> filteredUserFiles = new HashMap<>();
+        HashSet<String> userNames = groupUsersMapping.get(groupName);
+        for (String userName : userNames) {
+            System.out.println("Username :" + userName);
+            HashSet<String> filePaths = userFilesMapping.getOrDefault(userName, new HashSet<>());
+            System.out.println("\t" + filePaths);
+            filteredUserFiles.put(userName, filePaths);
+        }
+        dataSocket.sendObject(filteredUserFiles);
     }
 
     private static void leaveGroup(MyStreamSocket dataSocket)
