@@ -52,8 +52,8 @@ public class MyStreamSocket extends Socket {
         writeToDisk.close();
     }
 
-    public void sendFile(String filename) throws IOException {
-        FileInputStream fis = new FileInputStream(filename);
+    public void sendFile(String filePath) throws IOException {
+        FileInputStream fis = new FileInputStream(filePath);
         byte[] buffer = new byte[8192];
         int count;
         while ((count = fis.read(buffer)) > 0) {
