@@ -36,11 +36,26 @@ public class MyServer {
                 System.out.println(" input.readLine(): " + msgType);
                 if (Constants.MessageTypes.CREATE_USER.equals(msgType)) {
                     createUser(output, input);
+                } else if (Constants.MessageTypes.UPLOAD_FILE.equals(msgType)) {
+                    DataInputStream dis = new DataInputStream(inputStream);
+                    FileOutputStream fos = new FileOutputStream("newfile.mp4");
+                    uploadFile(dis, fos);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void uploadFile(DataInputStream input, FileOutputStream output)
+            throws IOException {
+        int count;
+        byte[] buffer = new byte[8192];
+        while ((count = input.read(buffer)) > 0) {
+            output.write(buffer, 0, count);
+            output.flush();
+        }
+        output.close();
     }
 
     private static void createUser(PrintWriter output, BufferedReader input) throws IOException {
