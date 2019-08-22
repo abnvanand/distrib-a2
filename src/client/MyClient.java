@@ -16,7 +16,9 @@ public class MyClient {
                     serverHost, serverPort);
 
             // TODO: make menu driven
-//            createUser(dataSocket);
+//            createUser(dataSocket, "abhinav");
+//            createUser(dataSocket, "lokesh");
+//            createUser(dataSocket, "rawat");
 
 //            String filename = "/home/abnv/Videos/tutorials/Compilers/videos/1-18/1 - 1 - 01-01- Introduction (8m20s).mp4";
 //            uploadFile(dataSocket, filename);
@@ -27,12 +29,40 @@ public class MyClient {
 //            String destination = "Apps/newfile.mp4";
 //            moveFile(dataSocket, source, destination);
 
-//            String groupName = "DS";
-//            createGroup(dataSocket, groupName);
-            listGroups(dataSocket);
+//
+//            createGroup(dataSocket, "mango");
+//            createGroup(dataSocket, "guava");
+//            createGroup(dataSocket, "DS");
+//            listGroups(dataSocket);
+//            joinGroup(dataSocket, "abhinav", "mango");
+//            joinGroup(dataSocket, "lokesh","mango");
+//            joinGroup(dataSocket, "rawat","guava");
+//            joinGroup(dataSocket, "shubham","mango");
+//            joinGroup(dataSocket, "rawat","apple");
+//            joinGroup(dataSocket, "rawat","mango");
+            leaveGroup(dataSocket, "abhinav",
+                    "mango");
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void leaveGroup(MyStreamSocket dataSocket,
+                                   String userName, String groupName)
+            throws IOException {
+        dataSocket.sendMessage(Constants.MessageTypes.LEAVE_GROUP);
+        dataSocket.sendMessage(userName);
+        dataSocket.sendMessage(groupName);
+        System.out.println(dataSocket.receiveMessage());
+    }
+
+    private static void joinGroup(MyStreamSocket dataSocket,
+                                  String userName, String groupName)
+            throws IOException {
+        dataSocket.sendMessage(Constants.MessageTypes.JOIN_GROUP);
+        dataSocket.sendMessage(userName);
+        dataSocket.sendMessage(groupName);
+        System.out.println(dataSocket.receiveMessage());
     }
 
     private static void listGroups(MyStreamSocket dataSocket)
@@ -75,10 +105,10 @@ public class MyClient {
         dataSocket.sendFile(filename);
     }
 
-    private static void createUser(MyStreamSocket dataSocket) throws IOException {
+    private static void createUser(MyStreamSocket dataSocket, String userName) throws IOException {
         dataSocket.sendMessage(Constants.MessageTypes.CREATE_USER);
         // TODO: Accept username
-        dataSocket.sendMessage("abhinav");
+        dataSocket.sendMessage(userName);
 
         // response contains whether the command was successful or not
         // so that the client may take further steps

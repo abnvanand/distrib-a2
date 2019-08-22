@@ -10,5 +10,7 @@ public class Constants {
 
         public static final String CREATE_GROUP = "create_group";
         public static final String LIST_GROUPS = "list_groups";
+        public static final String JOIN_GROUP = "join_group";
+        public static final String LEAVE_GROUP = "leave_group";
     }
 }

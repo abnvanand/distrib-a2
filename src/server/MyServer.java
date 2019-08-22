@@ -9,16 +9,20 @@ import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class MyServer {
     private static HashSet<String> userNames;
     private static HashSet<String> groups;
+    // <Groupname, Users>
+    private static HashMap<String, HashSet<String>> groupUsersMapping;
 
     public static void main(String[] args) {
         int serverPort = 12345;
         userNames = new HashSet<>();
         groups = new HashSet<>();
+        groupUsersMapping = new HashMap<>();
 
         try {
             ServerSocket myConnectionSocket = new ServerSocket(serverPort);
@@ -44,15 +48,60 @@ public class MyServer {
                     moveFile(dataSocket);
                 } else if (Constants.MessageTypes.CREATE_GROUP.equals(msgType)) {
                     createGroup(dataSocket);
-                }
-                else if(Constants.MessageTypes.LIST_GROUPS.equals(msgType)) {
+                } else if (Constants.MessageTypes.LIST_GROUPS.equals(msgType)) {
                     listGroups(dataSocket);
+                } else if (Constants.MessageTypes.JOIN_GROUP.equals(msgType)) {
+                    joinGroup(dataSocket);
+                } else if (Constants.MessageTypes.LEAVE_GROUP.equals(msgType)) {
+                    leaveGroup(dataSocket);
                 }
                 dataSocket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void leaveGroup(MyStreamSocket dataSocket)
+            throws IOException {
+        String userName = dataSocket.receiveMessage();
+        String groupName = dataSocket.receiveMessage();
+        if (!userNames.contains(userName)) {
+            dataSocket.sendMessage("Error: invalid username");
+            return;
+        }
+        if (!groups.contains(groupName)) {
+            dataSocket.sendMessage("Error: invalid group name");
+            return;
+        }
+
+        System.out.println("groupUsersMapping before: " + groupUsersMapping);
+        // FIXME: possible exception if user is not already in the group
+        groupUsersMapping.getOrDefault(groupName, new HashSet<>())
+                .remove(userName);
+        System.out.println("groupUsersMapping after: " + groupUsersMapping);
+
+        dataSocket.sendMessage("User: " + userName + " removed from Group: " + groupName);
+    }
+
+    private static void joinGroup(MyStreamSocket dataSocket)
+            throws IOException {
+        String userName = dataSocket.receiveMessage();
+        String groupName = dataSocket.receiveMessage();
+        if (!userNames.contains(userName)) {
+            dataSocket.sendMessage("Error: invalid username");
+            return;
+        }
+        if (!groups.contains(groupName)) {
+            dataSocket.sendMessage("Error: invalid group name");
+            return;
+        }
+        System.out.println("groupUsersMapping before: " + groupUsersMapping);
+        groupUsersMapping.putIfAbsent(groupName, new HashSet<>());
+        groupUsersMapping.get(groupName).add(userName);
+        System.out.println("groupUsersMapping after: " + groupUsersMapping);
+
+        dataSocket.sendMessage("User: " + userName + " added to Group: " + groupName);
     }
 
     private static void listGroups(MyStreamSocket dataSocket) throws IOException {
