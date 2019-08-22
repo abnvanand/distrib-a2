@@ -3,6 +3,7 @@ package server;
 import common.Constants;
 import common.MyStreamSocket;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.HashSet;
@@ -32,10 +33,29 @@ public class MyServer {
                     createUser(dataSocket);
                 } else if (Constants.MessageTypes.UPLOAD_FILE.equals(msgType)) {
                     uploadFile(dataSocket);
+                } else if (Constants.MessageTypes.CREATE_FOLDER.equals(msgType)) {
+                    createFolder(dataSocket);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void createFolder(MyStreamSocket dataSocket) throws IOException {
+        String folderName = dataSocket.receiveMessage();
+        File dir = new File(folderName);
+
+        // attempt to create the directory here
+        boolean success = dir.mkdir();
+        if (success) {
+            // creating the directory succeeded
+            System.out.println("Directory created successfully");
+            dataSocket.sendMessage("Success");
+        } else {
+            // creating the directory failed
+            System.out.println("Directory creation failed");
+            dataSocket.sendMessage("Failed");
         }
     }
 

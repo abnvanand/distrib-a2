@@ -15,12 +15,23 @@ public class MyClient {
                     serverHost, serverPort);
 
             // TODO: make menu driven
-            createUser(dataSocket);
-            String filename = "/home/abnv/Videos/tutorials/Compilers/videos/1-18/1 - 1 - 01-01- Introduction (8m20s).mp4";
-            uploadFile(dataSocket, filename);
+//            createUser(dataSocket);
+
+//            String filename = "/home/abnv/Videos/tutorials/Compilers/videos/1-18/1 - 1 - 01-01- Introduction (8m20s).mp4";
+//            uploadFile(dataSocket, filename);
+
+            createFolder(dataSocket, "Apps");
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void createFolder(MyStreamSocket dataSocket, String folderName) throws IOException {
+        dataSocket.sendMessage(Constants.MessageTypes.CREATE_FOLDER);
+        dataSocket.sendMessage(folderName);
+
+        String response = dataSocket.receiveMessage();
+        System.out.println(response);
     }
 
     private static void uploadFile(MyStreamSocket dataSocket, String filename) throws IOException {
