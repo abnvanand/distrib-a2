@@ -13,5 +13,7 @@ public class Constants {
         public static final String JOIN_GROUP = "join_group";
         public static final String LEAVE_GROUP = "leave_group";
         public static final String LIST_DETAIL = "list_detail";
+
+        public static final String QUIT = "quit";
     }
 }

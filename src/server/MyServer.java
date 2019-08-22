@@ -37,30 +37,35 @@ public class MyServer {
                 MyStreamSocket dataSocket = new MyStreamSocket(myConnectionSocket.accept()); // Accept() is a blocking call
                 System.out.println("Connection accepted");
 
-                // Message is received in the form of multiple lines
-                // First line specifies message type
-                String msgType = dataSocket.receiveMessage();
-                System.out.println(" input.readLine(): " + msgType);
-                if (Constants.MessageTypes.CREATE_USER.equals(msgType)) {
-                    createUser(dataSocket);
-                } else if (Constants.MessageTypes.UPLOAD_FILE.equals(msgType)) {
-                    uploadFile(dataSocket);
-                } else if (Constants.MessageTypes.CREATE_FOLDER.equals(msgType)) {
-                    createFolder(dataSocket);
-                } else if (Constants.MessageTypes.MOVE_FILE.equals(msgType)) {
-                    moveFile(dataSocket);
-                } else if (Constants.MessageTypes.CREATE_GROUP.equals(msgType)) {
-                    createGroup(dataSocket);
-                } else if (Constants.MessageTypes.LIST_GROUPS.equals(msgType)) {
-                    listGroups(dataSocket);
-                } else if (Constants.MessageTypes.JOIN_GROUP.equals(msgType)) {
-                    joinGroup(dataSocket);
-                } else if (Constants.MessageTypes.LEAVE_GROUP.equals(msgType)) {
-                    leaveGroup(dataSocket);
-                } else if (Constants.MessageTypes.LIST_DETAIL.equals(msgType)) {
-                    listDetail(dataSocket);
+                boolean done = false;
+                while (!done) {
+                    // Message is received in the form of multiple lines
+                    // First line specifies message type
+                    String msgType = dataSocket.receiveMessage();
+                    System.out.println(" input.readLine(): " + msgType);
+                    if (Constants.MessageTypes.QUIT.equalsIgnoreCase(msgType)) {
+                        dataSocket.close();
+                        done = true;
+                    } else if (Constants.MessageTypes.CREATE_USER.equals(msgType)) {
+                        createUser(dataSocket);
+                    } else if (Constants.MessageTypes.UPLOAD_FILE.equals(msgType)) {
+                        uploadFile(dataSocket);
+                    } else if (Constants.MessageTypes.CREATE_FOLDER.equals(msgType)) {
+                        createFolder(dataSocket);
+                    } else if (Constants.MessageTypes.MOVE_FILE.equals(msgType)) {
+                        moveFile(dataSocket);
+                    } else if (Constants.MessageTypes.CREATE_GROUP.equals(msgType)) {
+                        createGroup(dataSocket);
+                    } else if (Constants.MessageTypes.LIST_GROUPS.equals(msgType)) {
+                        listGroups(dataSocket);
+                    } else if (Constants.MessageTypes.JOIN_GROUP.equals(msgType)) {
+                        joinGroup(dataSocket);
+                    } else if (Constants.MessageTypes.LEAVE_GROUP.equals(msgType)) {
+                        leaveGroup(dataSocket);
+                    } else if (Constants.MessageTypes.LIST_DETAIL.equals(msgType)) {
+                        listDetail(dataSocket);
+                    }
                 }
-//                dataSocket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -144,7 +149,7 @@ public class MyServer {
     }
 
     private static void moveFile(MyStreamSocket dataSocket) throws IOException {
-        // TODO: Do without nio?
+        String userName = dataSocket.receiveMessage();  // needs username to update userFilesMapping
         String source = dataSocket.receiveMessage();
         String destination = dataSocket.receiveMessage();
 
@@ -154,11 +159,14 @@ public class MyServer {
                     (Paths.get(source),
                             Paths.get(destination));
         } catch (IOException e) {
-            // TODO: make error msg more user freindly
+            // TODO: make error msg more user friendly
             e.printStackTrace();
         }
 
         if (temp != null) {
+            userFilesMapping.get(userName).remove(source);
+            userFilesMapping.get(userName).add(destination);
+
             System.out.println("File renamed and moved successfully");
             dataSocket.sendMessage("Success");
         } else {
@@ -168,6 +176,7 @@ public class MyServer {
     }
 
     private static void createFolder(MyStreamSocket dataSocket) throws IOException {
+        String userName = dataSocket.receiveMessage();
         String folderName = dataSocket.receiveMessage();
         File dir = new File(folderName);
 
@@ -175,6 +184,9 @@ public class MyServer {
         boolean success = dir.mkdir();
         if (success) {
             // creating the directory succeeded
+            userFilesMapping.putIfAbsent(userName, new HashSet<>());
+            userFilesMapping.get(userName).add(folderName);
+
             System.out.println("Directory created successfully");
             dataSocket.sendMessage("Success");
         } else {
@@ -186,16 +198,20 @@ public class MyServer {
 
     private static void uploadFile(MyStreamSocket dataSocket)
             throws IOException {
-        // TODO: Accept file name from client
-        dataSocket.receiveFile("newfile.mp4");
+        String userName = dataSocket.receiveMessage();
+        String fileName = dataSocket.receiveMessage();  // filename with which it will be saved on the server
+        dataSocket.receiveFile(fileName);
+        userFilesMapping.putIfAbsent(userName, new HashSet<>());
+        userFilesMapping.get(userName).add(fileName);
     }
 
-    private static void createUser(MyStreamSocket dataSocket) throws IOException {
+    private static void createUser(MyStreamSocket dataSocket)
+            throws IOException {
         System.out.println("Create user request received.");
         String newUser = dataSocket.receiveMessage();
         if (userNames.contains(newUser)) {
             System.out.println("User exists");
-            dataSocket.sendMessage("Error: user already exists.");
+            dataSocket.sendMessage("Error");
         } else {
             userNames.add(newUser);
             System.out.println("User created: " + newUser);
