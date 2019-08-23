@@ -23,6 +23,7 @@ public class MyClientHelper {
 
     public void getFile(String groupName, String userName, String filePath)
             throws IOException {
+        this.dataSocket.sendMessage(Constants.MessageTypes.GET_FILE);
         this.dataSocket.sendMessage(groupName);
         this.dataSocket.sendMessage(userName);
         this.dataSocket.sendMessage(filePath);
@@ -34,7 +35,8 @@ public class MyClientHelper {
         }
         System.out.println(String.format("Receiving file: %s/%s", userName, filePath));
         File file = new File(filePath);
-        this.dataSocket.receiveFile(file.getName(), file.length());
+        long fileSize = Long.parseLong(this.dataSocket.receiveMessage());
+        this.dataSocket.receiveFile(file.getName(), fileSize);
     }
 
     public void listDetail(String groupName)
