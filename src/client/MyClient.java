@@ -21,13 +21,20 @@ public class MyClient {
             serverHost = "localhost";
         }
 
-        System.out.println("Enter server port");
+        System.out.println("Enter server port (default 12345)");
         String serverPort = in.nextLine();
         if (serverPort.trim().isEmpty()) {
             serverPort = "12345";
         }
+
+        System.out.println("Enter server UDP port (default 12346)");
+        String serverUDPPort = in.nextLine();
+        if (serverUDPPort.trim().isEmpty()) {
+            serverUDPPort = "12346";
+        }
+
         try {
-            MyClientHelper helper = new MyClientHelper(serverHost, serverPort);
+            MyClientHelper helper = new MyClientHelper(serverHost, serverPort, serverUDPPort);
             while (true) {
 
                 System.out.println("Enter command in a single line `quit` to end the session");
@@ -79,6 +86,10 @@ public class MyClient {
                         String userName = pathSplits[1];
                         String filePath = pathSplits[2];
                         helper.getFile(groupName, userName, filePath);
+                    } else if (Constants.MessageTypes.UPLOAD_UDP.equals(msgType)) {
+                        File f = new File(split[1]);
+
+                        helper.uploadUdp(helper.getMyUserName(), f.getName(), split[1], f.length());
                     }
                 } catch (IOException e) {
                     System.out.println(e.getLocalizedMessage());

@@ -14,6 +14,7 @@ public class Constants {
         public static final String LEAVE_GROUP = "leave_group";
         public static final String LIST_DETAIL = "list_detail";
         public static final String GET_FILE = "get_file";
+        public static final String UPLOAD_UDP = "upload_udp";
 
         public static final String QUIT = "quit";
     }

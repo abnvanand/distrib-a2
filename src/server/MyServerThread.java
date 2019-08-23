@@ -1,15 +1,18 @@
 package server;
 
 import common.Constants;
+import common.MyDatagramSocket;
 import common.MyStreamSocket;
 
 import java.io.IOException;
 
 public class MyServerThread implements Runnable {
     private MyStreamSocket dataSocket;
+    private MyDatagramSocket myDatagramSocket;
 
-    MyServerThread(MyStreamSocket myStreamSocket) {
+    MyServerThread(MyStreamSocket myStreamSocket, MyDatagramSocket myDatagramSocket) {
         this.dataSocket = myStreamSocket;
+        this.myDatagramSocket = myDatagramSocket;
     }
 
     @Override
@@ -46,6 +49,8 @@ public class MyServerThread implements Runnable {
                     MyServer.listDetail(dataSocket);
                 } else if (Constants.MessageTypes.GET_FILE.equals(msgType)) {
                     MyServer.getFile(dataSocket);
+                } else if (Constants.MessageTypes.UPLOAD_UDP.equals(msgType)) {
+                    MyServer.uploadUdp(dataSocket, myDatagramSocket);
                 }
 
             } catch (IOException e) {

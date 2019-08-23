@@ -1,5 +1,6 @@
 package server;
 
+import common.MyDatagramSocket;
 import common.MyStreamSocket;
 
 import java.io.File;
@@ -10,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static common.Constants.UPLOAD_PATH;
@@ -23,15 +25,33 @@ public class MyServer {
     private static ConcurrentHashMap<String, HashSet<String>> userFilesMapping;
 
     public static void main(String[] args) {
-        int serverPort = 12345;
+        Scanner in = new Scanner(System.in);
+
+        System.out.println("Enter server port (default 12345)");
+        String serverPort = in.nextLine();
+        if (serverPort.trim().isEmpty()) {
+            serverPort = "12345";
+        }
+
+        System.out.println("Enter server UDP port (default 12346)");
+        String udpServerPort = in.nextLine();
+        if (udpServerPort.trim().isEmpty()) {
+            udpServerPort = "12346";
+        }
+
         userNames = new HashSet<>();
         groups = new HashSet<>();
         groupUsersMapping = new ConcurrentHashMap<>();
         userFilesMapping = new ConcurrentHashMap<>();
 
         try {
-            ServerSocket myConnectionSocket = new ServerSocket(serverPort);
+            ServerSocket myConnectionSocket = new ServerSocket(Integer.parseInt(serverPort));
             System.out.println("Server is running at: " + serverPort);
+
+            // Instantiate a datagram socket for the upload_udp
+            // Server binds to a specific port to which the clients will send(upload) data
+            MyDatagramSocket myDatagramSocket = new MyDatagramSocket(Integer.parseInt(udpServerPort));
+            System.out.println("UDP Server is running at: " + udpServerPort);
 
             // Loop forever
             while (true) {
@@ -41,7 +61,7 @@ public class MyServer {
                         (myConnectionSocket.accept()); // Accept() is a blocking call
                 System.out.println("Connection accepted");
                 // Start a thread to handle this client's session
-                Thread theThread = new Thread(new MyServerThread(dataSocket));
+                Thread theThread = new Thread(new MyServerThread(dataSocket, myDatagramSocket));
                 theThread.start();
                 // Now loop to next client
 
@@ -209,6 +229,26 @@ public class MyServer {
         System.out.println("Uploading file to: " + fullPath);
 
         dataSocket.receiveFile(fullPath, Long.parseLong(fileSize));
+
+        userFilesMapping.putIfAbsent(userName, new HashSet<>());
+        userFilesMapping.get(userName).add(fileName);
+
+        System.out.println("Uploaded file to: " + fullPath);
+    }
+
+    public static void uploadUdp(MyStreamSocket myStreamSocket, MyDatagramSocket myDatagramSocket)
+            throws IOException {
+        String userName = myStreamSocket.receiveMessage();
+        String fileName = myStreamSocket.receiveMessage();  // filename with which it will be saved on the server
+        String fileSize = myStreamSocket.receiveMessage();
+
+        String fullPath = String.format("%s/%s/%s", UPLOAD_PATH, userName, fileName);
+        System.out.println("Uploading file to: " + fullPath);
+
+        // TODO:
+         myDatagramSocket.receiveFile(fullPath, Long.parseLong(fileSize));
+
+//        System.out.println("myDatagramSocket.receiveMessage(): " + myDatagramSocket.receiveMessage());
 
         userFilesMapping.putIfAbsent(userName, new HashSet<>());
         userFilesMapping.get(userName).add(fileName);

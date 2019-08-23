@@ -1,18 +1,25 @@
 package client;
 
 import common.Constants;
+import common.MyDatagramSocket;
 import common.MyStreamSocket;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 
 public class MyClientHelper {
     private String myUserName;
     private MyStreamSocket dataSocket;
+    private String serverHost;
+    private String serverPort;
+    private String serverUDPPort;
 
-    MyClientHelper(String serverHost, String serverPort) throws IOException {
+    MyClientHelper(String serverHost, String serverPort, String serverUDPPort) throws IOException {
         this.dataSocket = new MyStreamSocket(
                 serverHost, Integer.parseInt(serverPort));
+        this.serverHost = serverHost;
+        this.serverUDPPort = serverUDPPort;
     }
 
     public String getMyUserName() {
@@ -116,6 +123,20 @@ public class MyClientHelper {
         this.dataSocket.sendMessage(String.valueOf(fileSize));
         System.out.println("Sending file: " + filePath);
         this.dataSocket.sendFile(filePath);
+    }
+
+    public void uploadUdp(String userName, String fileName, String filePath, long fileSize) throws IOException {
+        this.dataSocket.sendMessage(Constants.MessageTypes.UPLOAD_UDP);
+        this.dataSocket.sendMessage(userName);
+        this.dataSocket.sendMessage(fileName);
+        this.dataSocket.sendMessage(String.valueOf(fileSize));
+        System.out.println("Sending file: " + filePath);
+        // No need to bind client to a port
+        MyDatagramSocket myDatagramSocket = new MyDatagramSocket();
+        // TODO:
+        myDatagramSocket.sendFile(InetAddress.getByName(this.serverHost), Integer.parseInt(serverUDPPort), filePath);
+//        myDatagramSocket.sendMessage(InetAddress.getByName(this.serverHost), Integer.parseInt(serverUDPPort), filePath);
+        myDatagramSocket.close();
     }
 
     public void createUser(String userName)
