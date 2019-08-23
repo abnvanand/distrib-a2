@@ -36,47 +36,52 @@ public class MyClient {
                 System.out.println("command: " + command);
                 System.out.println("Splits: " + split);
                 String msgType = split[0];
-                if (Constants.MessageTypes.QUIT.equalsIgnoreCase(split[0])) {
-                    helper.done();
-                    break;  // break from loop
+                try {
 
-                } else if (Constants.MessageTypes.CREATE_USER.equals(msgType)) {
-                    System.out.println("msgType: " + msgType);
+                    if (Constants.MessageTypes.QUIT.equalsIgnoreCase(split[0])) {
+                        helper.done();
+                        break;  // break from loop
 
-                    helper.createUser(split[1]);
+                    } else if (Constants.MessageTypes.CREATE_USER.equals(msgType)) {
+                        System.out.println("msgType: " + msgType);
 
-                } else if (Constants.MessageTypes.UPLOAD_FILE.equals(msgType)) {
-                    File f = new File(split[1]);
+                        helper.createUser(split[1]);
 
-                    helper.uploadFile(helper.getMyUserName(), f.getName(), split[1], f.length());
+                    } else if (Constants.MessageTypes.UPLOAD_FILE.equals(msgType)) {
+                        File f = new File(split[1]);
 
-                } else if (Constants.MessageTypes.CREATE_FOLDER.equals(msgType)) {
-                    helper.createFolder(helper.getMyUserName(), split[1]);
+                        helper.uploadFile(helper.getMyUserName(), f.getName(), split[1], f.length());
 
-                } else if (Constants.MessageTypes.MOVE_FILE.equals(msgType)) {
-                    helper.moveFile(helper.getMyUserName(), split[1], split[2]);
+                    } else if (Constants.MessageTypes.CREATE_FOLDER.equals(msgType)) {
+                        helper.createFolder(helper.getMyUserName(), split[1]);
 
-                } else if (Constants.MessageTypes.CREATE_GROUP.equals(msgType)) {
-                    helper.createGroup(split[1]);
+                    } else if (Constants.MessageTypes.MOVE_FILE.equals(msgType)) {
+                        helper.moveFile(helper.getMyUserName(), split[1], split[2]);
 
-                } else if (Constants.MessageTypes.LIST_GROUPS.equals(msgType)) {
-                    helper.listGroups();
+                    } else if (Constants.MessageTypes.CREATE_GROUP.equals(msgType)) {
+                        helper.createGroup(split[1]);
 
-                } else if (Constants.MessageTypes.JOIN_GROUP.equals(msgType)) {
-                    helper.joinGroup(helper.getMyUserName(), split[1]);
+                    } else if (Constants.MessageTypes.LIST_GROUPS.equals(msgType)) {
+                        helper.listGroups();
 
-                } else if (Constants.MessageTypes.LEAVE_GROUP.equals(msgType)) {
-                    helper.leaveGroup(helper.getMyUserName(), split[1]);
+                    } else if (Constants.MessageTypes.JOIN_GROUP.equals(msgType)) {
+                        helper.joinGroup(helper.getMyUserName(), split[1]);
 
-                } else if (Constants.MessageTypes.LIST_DETAIL.equals(msgType)) {
-                    helper.listDetail(split[1]);
+                    } else if (Constants.MessageTypes.LEAVE_GROUP.equals(msgType)) {
+                        helper.leaveGroup(helper.getMyUserName(), split[1]);
 
-                } else if (Constants.MessageTypes.GET_FILE.equals(msgType)) {
-                    String[] pathSplits = split[1].split("/");
-                    String groupName = pathSplits[0];
-                    String userName = pathSplits[1];
-                    String filePath = pathSplits[2];
-                    helper.getFile(groupName, userName, filePath);
+                    } else if (Constants.MessageTypes.LIST_DETAIL.equals(msgType)) {
+                        helper.listDetail(split[1]);
+
+                    } else if (Constants.MessageTypes.GET_FILE.equals(msgType)) {
+                        String[] pathSplits = split[1].split("/");
+                        String groupName = pathSplits[0];
+                        String userName = pathSplits[1];
+                        String filePath = pathSplits[2];
+                        helper.getFile(groupName, userName, filePath);
+                    }
+                } catch (IOException e) {
+                    System.out.println(e.getLocalizedMessage());
                 }
             }
         } catch (IOException e) {
