@@ -33,10 +33,13 @@ public class MyClientHelper {
             System.out.println("Error: invalid file referred");
             return;
         }
+        // response either contains "error" or the filesize
+        String fileSize = response;
+        System.out.println("Received file size: " + fileSize);
+
         System.out.println(String.format("Receiving file: %s/%s", userName, filePath));
         File file = new File(filePath);
-        long fileSize = Long.parseLong(this.dataSocket.receiveMessage());
-        this.dataSocket.receiveFile(file.getName(), fileSize);
+        this.dataSocket.receiveFile(file.getName(), Long.parseLong(fileSize));
     }
 
     public void listDetail(String groupName)
