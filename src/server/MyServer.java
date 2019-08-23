@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static common.Constants.UPLOAD_PATH;
 
@@ -17,20 +18,20 @@ public class MyServer {
     private static HashSet<String> userNames;
     private static HashSet<String> groups;
     // <Groupname, Users>
-    private static HashMap<String, HashSet<String>> groupUsersMapping;
+    private static ConcurrentHashMap<String, HashSet<String>> groupUsersMapping;
     // <Username, filepaths>
-    private static HashMap<String, HashSet<String>> userFilesMapping;
+    private static ConcurrentHashMap<String, HashSet<String>> userFilesMapping;
 
     public static void main(String[] args) {
         int serverPort = 12345;
         userNames = new HashSet<>();
         groups = new HashSet<>();
-        groupUsersMapping = new HashMap<>();
-        userFilesMapping = new HashMap<>();
+        groupUsersMapping = new ConcurrentHashMap<>();
+        userFilesMapping = new ConcurrentHashMap<>();
 
         try {
             ServerSocket myConnectionSocket = new ServerSocket(serverPort);
-            System.out.println("Server is ready");
+            System.out.println("Server is running at: " + serverPort);
 
             // Loop forever
             while (true) {
@@ -74,13 +75,15 @@ public class MyServer {
 
     public static void listDetail(MyStreamSocket dataSocket)
             throws IOException {
-        String groupName = dataSocket.receiveMessage();
-//        if (!groups.contains(groupName)) {
-        // TODO: send error back to client or empty list
-//            return;
-//        }
         HashMap<String, HashSet<String>> filteredUserFiles = new HashMap<>();
-        HashSet<String> userNames = groupUsersMapping.get(groupName);
+
+        String groupName = dataSocket.receiveMessage();
+        if (!groups.contains(groupName)) {
+//         TODO: send error back to client or empty list
+            dataSocket.sendObject(filteredUserFiles);
+            return;
+        }
+        HashSet<String> userNames = groupUsersMapping.getOrDefault(groupName, new HashSet<>());
         for (String userName : userNames) {
             System.out.println("Username :" + userName);
             HashSet<String> filePaths = userFilesMapping.getOrDefault(userName, new HashSet<>());
@@ -117,11 +120,11 @@ public class MyServer {
         String userName = dataSocket.receiveMessage();
         String groupName = dataSocket.receiveMessage();
         if (!userNames.contains(userName)) {
-            dataSocket.sendMessage("Error: invalid username");
+            dataSocket.sendMessage("Error: invalid username " + userName);
             return;
         }
         if (!groups.contains(groupName)) {
-            dataSocket.sendMessage("Error: invalid group name");
+            dataSocket.sendMessage("Error: invalid group name " + groupName);
             return;
         }
         System.out.println("groupUsersMapping before: " + groupUsersMapping);
