@@ -1,6 +1,5 @@
 package server;
 
-import common.Constants;
 import common.MyStreamSocket;
 
 import java.io.File;
@@ -33,48 +32,25 @@ public class MyServer {
             ServerSocket myConnectionSocket = new ServerSocket(serverPort);
             System.out.println("Server is ready");
 
+            // Loop forever
             while (true) {
                 // Wait for a connection
                 System.out.println("Waiting for a connection");
-                MyStreamSocket dataSocket = new MyStreamSocket(myConnectionSocket.accept()); // Accept() is a blocking call
+                MyStreamSocket dataSocket = new MyStreamSocket
+                        (myConnectionSocket.accept()); // Accept() is a blocking call
                 System.out.println("Connection accepted");
+                // Start a thread to handle this client's session
+                Thread theThread = new Thread(new MyServerThread(dataSocket));
+                theThread.start();
+                // Now loop to next client
 
-                boolean done = false;
-                while (!done) {
-                    // Message is received in the form of multiple lines
-                    // First line specifies message type
-                    String msgType = dataSocket.receiveMessage();
-                    System.out.println(" input.readLine(): " + msgType);
-                    if (Constants.MessageTypes.QUIT.equalsIgnoreCase(msgType)) {
-                        dataSocket.close();
-                        done = true;
-                    } else if (Constants.MessageTypes.CREATE_USER.equals(msgType)) {
-                        createUser(dataSocket);
-                    } else if (Constants.MessageTypes.UPLOAD_FILE.equals(msgType)) {
-                        uploadFile(dataSocket);
-                    } else if (Constants.MessageTypes.CREATE_FOLDER.equals(msgType)) {
-                        createFolder(dataSocket);
-                    } else if (Constants.MessageTypes.MOVE_FILE.equals(msgType)) {
-                        moveFile(dataSocket);
-                    } else if (Constants.MessageTypes.CREATE_GROUP.equals(msgType)) {
-                        createGroup(dataSocket);
-                    } else if (Constants.MessageTypes.LIST_GROUPS.equals(msgType)) {
-                        listGroups(dataSocket);
-                    } else if (Constants.MessageTypes.JOIN_GROUP.equals(msgType)) {
-                        joinGroup(dataSocket);
-                    } else if (Constants.MessageTypes.LEAVE_GROUP.equals(msgType)) {
-                        leaveGroup(dataSocket);
-                    } else if (Constants.MessageTypes.LIST_DETAIL.equals(msgType)) {
-                        listDetail(dataSocket);
-                    }
-                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void getFile(MyStreamSocket dataSocket)
+    public static void getFile(MyStreamSocket dataSocket)
             throws IOException {
         String groupName = dataSocket.receiveMessage();
         String userName = dataSocket.receiveMessage();
@@ -91,10 +67,12 @@ public class MyServer {
         }
         String fullyQualifiedPath = String.format("%s/%s/%s", UPLOAD_PATH, userName, filePath);
         System.out.println("Sending file: " + fullyQualifiedPath);
+        File file = new File(fullyQualifiedPath);
+        dataSocket.sendMessage(String.valueOf(file.length()));
         dataSocket.sendFile(fullyQualifiedPath);
     }
 
-    private static void listDetail(MyStreamSocket dataSocket)
+    public static void listDetail(MyStreamSocket dataSocket)
             throws IOException {
         String groupName = dataSocket.receiveMessage();
 //        if (!groups.contains(groupName)) {
@@ -112,7 +90,7 @@ public class MyServer {
         dataSocket.sendObject(filteredUserFiles);
     }
 
-    private static void leaveGroup(MyStreamSocket dataSocket)
+    public static void leaveGroup(MyStreamSocket dataSocket)
             throws IOException {
         String userName = dataSocket.receiveMessage();
         String groupName = dataSocket.receiveMessage();
@@ -134,7 +112,7 @@ public class MyServer {
         dataSocket.sendMessage("User: " + userName + " removed from Group: " + groupName);
     }
 
-    private static void joinGroup(MyStreamSocket dataSocket)
+    public static void joinGroup(MyStreamSocket dataSocket)
             throws IOException {
         String userName = dataSocket.receiveMessage();
         String groupName = dataSocket.receiveMessage();
@@ -154,11 +132,11 @@ public class MyServer {
         dataSocket.sendMessage("User: " + userName + " added to Group: " + groupName);
     }
 
-    private static void listGroups(MyStreamSocket dataSocket) throws IOException {
+    public static void listGroups(MyStreamSocket dataSocket) throws IOException {
         dataSocket.sendObject(groups);
     }
 
-    private static void createGroup(MyStreamSocket dataSocket) throws IOException {
+    public static void createGroup(MyStreamSocket dataSocket) throws IOException {
         String groupName = dataSocket.receiveMessage();
         if (groups.contains(groupName)) {
             System.out.println("Group " + groupName + " already exists.");
@@ -170,7 +148,7 @@ public class MyServer {
         }
     }
 
-    private static void moveFile(MyStreamSocket dataSocket) throws IOException {
+    public static void moveFile(MyStreamSocket dataSocket) throws IOException {
         String userName = dataSocket.receiveMessage();  // needs username to update userFilesMapping
         String source = dataSocket.receiveMessage();
         String destination = dataSocket.receiveMessage();
@@ -197,7 +175,7 @@ public class MyServer {
         }
     }
 
-    private static void createFolder(MyStreamSocket dataSocket) throws IOException {
+    public static void createFolder(MyStreamSocket dataSocket) throws IOException {
         String userName = dataSocket.receiveMessage();
         String folderName = dataSocket.receiveMessage();
         File dir = new File(String.format("%s/%s/%s", UPLOAD_PATH, userName, folderName));
@@ -218,7 +196,7 @@ public class MyServer {
         }
     }
 
-    private static void uploadFile(MyStreamSocket dataSocket)
+    public static void uploadFile(MyStreamSocket dataSocket)
             throws IOException {
         String userName = dataSocket.receiveMessage();
         String fileName = dataSocket.receiveMessage();  // filename with which it will be saved on the server
@@ -235,7 +213,7 @@ public class MyServer {
         System.out.println("Uploaded file to: " + fullPath);
     }
 
-    private static void createUser(MyStreamSocket dataSocket)
+    public static void createUser(MyStreamSocket dataSocket)
             throws IOException {
         System.out.println("Create user request received.");
         String newUser = dataSocket.receiveMessage();
