@@ -5,12 +5,15 @@ import java.net.Socket;
 
 public class MyStreamSocket extends Socket {
     private Socket dataSocket;
-    private BufferedReader bufferedReader;
-    private PrintWriter printWriter;
+//    private BufferedReader bufferedReader;
+//    private PrintWriter printWriter;
+//    private InputStreamReader inputStreamReader;
+//    private OutputStreamWriter outputStreamWriter;
+
     private DataInputStream dataInputStream;
     private DataOutputStream dataOutputStream;
-    ObjectOutputStream objectOutputStream;
-    ObjectInputStream objectInputStream;
+//    private ObjectOutputStream objectOutputStream;
+//    private ObjectInputStream objectInputStream;
 
     public MyStreamSocket(String acceptorHost, int acceptorPort) throws IOException {
         this.dataSocket = new Socket(acceptorHost, acceptorPort);
@@ -26,26 +29,40 @@ public class MyStreamSocket extends Socket {
         InputStream inStream = dataSocket.getInputStream();
         OutputStream outStream = dataSocket.getOutputStream();
 
-        this.bufferedReader = new BufferedReader(new InputStreamReader(inStream));
-        this.printWriter = new PrintWriter(new OutputStreamWriter(outStream));
+//        inputStreamReader = new InputStreamReader(inStream);
+//        outputStreamWriter = new OutputStreamWriter(outStream);
 
+//        this.bufferedReader = new BufferedReader(inputStreamReader);
+//        this.printWriter = new PrintWriter(outputStreamWriter);
+//
+        /*
+        There should be no problem creating two readers for the same inputstream.
+        The problem is knowing when (and how much) to read which reader.
+        They will both consume (and advance) the underlying stream when you read from them, since you have mixed types of data.
+          You could just read the stream as bytes and then convert the bytes explicitly in your code (new String(bytes, "UTF-8") etc).
+          Or you could split your communication onto two different sockets. – pap(SO)
+         */
         this.dataInputStream = new DataInputStream(inStream);
         this.dataOutputStream = new DataOutputStream(outStream);
-
-        objectOutputStream = new ObjectOutputStream(dataOutputStream);
-        objectInputStream = new ObjectInputStream(dataInputStream);
+//
+//        objectOutputStream = new ObjectOutputStream(dataOutputStream);
+//        objectInputStream = new ObjectInputStream(dataInputStream);
     }
 
-    public void sendMessage(String message) {
-        this.printWriter.println(message);
-        this.printWriter.flush();
+    public synchronized void sendMessage(String message) throws IOException {
+        this.dataOutputStream.writeBytes(message);
+        this.dataOutputStream.write(0x0A);  // write \n character at the end for comm msgs
+        this.dataOutputStream.flush();
+//        this.printWriter.println(message);
+//        this.printWriter.flush();
     }
 
-    public String receiveMessage() throws IOException {
-        return this.bufferedReader.readLine();
+    public synchronized String receiveMessage() throws IOException {
+        return readLine(this.dataInputStream);
+        //        return this.bufferedReader.readLine();
     }
 
-    public void receiveFile(String newFileName, long numBytes) throws IOException {
+    public synchronized void receiveFile(String newFileName, long numBytes) throws IOException {
         FileOutputStream writeToDisk = new FileOutputStream(newFileName);
 
         int count;
@@ -60,7 +77,7 @@ public class MyStreamSocket extends Socket {
         writeToDisk.close();
     }
 
-    public void sendFile(String filePath) throws IOException {
+    public synchronized void sendFile(String filePath) throws IOException {
         FileInputStream fis = new FileInputStream(filePath);
         byte[] buffer = new byte[8192];
         int count;
@@ -74,17 +91,37 @@ public class MyStreamSocket extends Socket {
 //        dataOutputStream.close(); // DONOT close DOS as one client won't be able to send multiple files
     }
 
-    public void sendObject(Object groups)
+    public synchronized void sendObject(Object groups)
             throws IOException {
-        objectOutputStream.writeObject(groups);
-        objectOutputStream.flush();
+//        objectOutputStream.writeObject(groups);
+//        objectOutputStream.flush();
 //        objectOutputStream.close();
     }
 
-    public Object receiveObject()
+    public synchronized Object receiveObject()
             throws IOException, ClassNotFoundException {
-        Object returnVal = objectInputStream.readObject();
+//        Object returnVal = objectInputStream.readObject();
 //        objectInputStream.close();
-        return returnVal;
+//        return returnVal;
+        return null;
+    }
+
+    /**
+     * Reads UTF-8 character data; lines are terminated with '\n'
+     */
+    private static String readLine(InputStream in) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        while (true) {
+            int b = in.read();
+            if (b < 0) {
+                throw new IOException("Data truncated");
+            } else if (b == 0x0A) {
+                // If b is a new line character
+                // we have receive a comm message
+                break;
+            }
+            buffer.write(b);
+        }
+        return new String(buffer.toByteArray(), "UTF-8");
     }
 }
