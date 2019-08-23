@@ -5,8 +5,6 @@ import common.MyStreamSocket;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
 
 public class MyClientHelper {
     private String myUserName;
@@ -46,14 +44,14 @@ public class MyClientHelper {
             throws IOException {
         this.dataSocket.sendMessage(Constants.MessageTypes.LIST_DETAIL);
         this.dataSocket.sendMessage(groupName);
-        HashMap<String, HashSet<String>> filteredUserFiles =
-                null;
-        try {
-            filteredUserFiles = (HashMap<String, HashSet<String>>) this.dataSocket.receiveObject();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        System.out.println(filteredUserFiles);
+//        HashMap<String, HashSet<String>> filteredUserFiles = null;
+//        try {
+//            filteredUserFiles = (HashMap<String, HashSet<String>>) this.dataSocket.receiveObject();
+//        } catch (ClassNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//        System.out.println(filteredUserFiles);
+        System.out.println(this.dataSocket.receiveMessage());
     }
 
     public void leaveGroup(String userName, String groupName)
@@ -75,13 +73,14 @@ public class MyClientHelper {
     public void listGroups()
             throws IOException {
         this.dataSocket.sendMessage(Constants.MessageTypes.LIST_GROUPS);
-        HashSet<String> groups = null;
-        try {
-            groups = (HashSet<String>) this.dataSocket.receiveObject();
-            System.out.println(groups.toString());
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+//        HashSet<String> groups = null;
+//        try {
+//            groups = (HashSet<String>) this.dataSocket.receiveObject();
+//            System.out.println(groups.toString());
+//        } catch (ClassNotFoundException e) {
+//            e.printStackTrace();
+//        }
+        System.out.println(this.dataSocket.receiveMessage());
     }
 
     public void createGroup(String groupName) throws IOException {

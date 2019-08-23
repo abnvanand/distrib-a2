@@ -80,7 +80,7 @@ public class MyServer {
         String groupName = dataSocket.receiveMessage();
         if (!groups.contains(groupName)) {
 //         TODO: send error back to client or empty list
-            dataSocket.sendObject(filteredUserFiles);
+            dataSocket.sendMessage(filteredUserFiles.toString());
             return;
         }
         HashSet<String> userNames = groupUsersMapping.getOrDefault(groupName, new HashSet<>());
@@ -90,7 +90,7 @@ public class MyServer {
             System.out.println("\t" + filePaths);
             filteredUserFiles.put(userName, filePaths);
         }
-        dataSocket.sendObject(filteredUserFiles);
+        dataSocket.sendMessage(filteredUserFiles.toString());
     }
 
     public static void leaveGroup(MyStreamSocket dataSocket)
@@ -136,7 +136,7 @@ public class MyServer {
     }
 
     public static void listGroups(MyStreamSocket dataSocket) throws IOException {
-        dataSocket.sendObject(groups);
+        dataSocket.sendMessage(groups.toString());
     }
 
     public static void createGroup(MyStreamSocket dataSocket) throws IOException {
