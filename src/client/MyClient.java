@@ -102,6 +102,7 @@ public class MyClient {
                         helper.shareMsg(helper.getMyUserName(), groupName, msg);
                     }
                 } catch (IOException e) {
+//                    e.printStackTrace();
                     System.out.println(e.getLocalizedMessage());
                 }
             }

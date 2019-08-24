@@ -22,4 +22,5 @@ public class Constants {
 
     public static final String UPLOAD_PATH = "uploads";
     public static final String MULTICAST_ADDRESS = "239.1.2.3"; // TODO: Set by scanner.in
+    public static final int MULTICAST_TTL = 32; // TODO: find best choice
 }

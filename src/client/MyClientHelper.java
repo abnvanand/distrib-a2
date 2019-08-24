@@ -158,14 +158,21 @@ public class MyClientHelper {
 
     public void uploadUdp(String userName, String fileName, String filePath, long fileSize) throws IOException {
         this.dataSocket.sendMessage(Constants.MessageTypes.UPLOAD_UDP);
-        this.dataSocket.sendMessage(userName);
-        this.dataSocket.sendMessage(fileName);
-        this.dataSocket.sendMessage(String.valueOf(fileSize));
+//        this.dataSocket.sendMessage(userName);
+//        this.dataSocket.sendMessage(fileName);
+//        this.dataSocket.sendMessage(String.valueOf(fileSize));
+
         System.out.println("Sending file: " + filePath);
         // No need to bind client to a port
         MyDatagramSocket myDatagramSocket = new MyDatagramSocket();
         // TODO:
-        myDatagramSocket.sendFile(InetAddress.getByName(this.serverHost), Integer.parseInt(serverUDPPort), filePath);
+        String header = String.format("%s %s %s ", userName, fileName, String.valueOf(fileSize));
+
+        myDatagramSocket.sendMessage(InetAddress.getByName(this.serverHost),
+                Integer.parseInt(serverUDPPort), header);
+
+        myDatagramSocket.sendFile(InetAddress.getByName(this.serverHost),
+                Integer.parseInt(serverUDPPort), filePath);
 //        myDatagramSocket.sendMessage(InetAddress.getByName(this.serverHost), Integer.parseInt(serverUDPPort), filePath);
         myDatagramSocket.close();
     }

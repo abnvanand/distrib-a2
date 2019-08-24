@@ -281,20 +281,26 @@ public class MyServer {
 
     public static void uploadUdp(MyStreamSocket myStreamSocket, MyDatagramSocket myDatagramSocket)
             throws IOException {
-        String userName = myStreamSocket.receiveMessage();
-        String fileName = myStreamSocket.receiveMessage();  // filename with which it will be saved on the server
-        String fileSize = myStreamSocket.receiveMessage();
+//        String userName = myStreamSocket.receiveMessage();
+//        String fileName = myStreamSocket.receiveMessage();  // filename with which it will be saved on the server
+//        String fileSize = myStreamSocket.receiveMessage();
 
-        String fullPath = String.format("%s/%s/%s", UPLOAD_PATH, userName, fileName);
+        String header = myDatagramSocket.receiveMessage();
+        String[] split = header.split(" ");
+        String username = split[0].trim();
+        String filename = split[1].trim();
+        String filesize = split[2].trim();
+
+        String fullPath = String.format("%s/%s/%s", UPLOAD_PATH, username, filename);
         System.out.println("Uploading file to: " + fullPath);
 
         // TODO:
-        myDatagramSocket.receiveFile(fullPath, Long.parseLong(fileSize));
+        myDatagramSocket.receiveFile(fullPath, Long.parseLong(filesize));
 
 //        System.out.println("myDatagramSocket.receiveMessage(): " + myDatagramSocket.receiveMessage());
 
-        userFilesMapping.putIfAbsent(userName, new HashSet<>());
-        userFilesMapping.get(userName).add(fileName);
+        userFilesMapping.putIfAbsent(username, new HashSet<>());
+        userFilesMapping.get(username).add(filename);
 
         System.out.println("Uploaded file to: " + fullPath);
     }
@@ -326,7 +332,6 @@ public class MyServer {
         String groupName = dataSocket.receiveMessage();
         String message = dataSocket.receiveMessage();
         // TODO: do sanity check of userName/groupName
-        // FIXME: remove hardcoded port
         String multicastPort = groupMulticastPort.get(groupName);
         broadcastMsg(multicastPort, userName, groupName, message);
     }
@@ -340,7 +345,7 @@ public class MyServer {
 
             MulticastSocket multicastSocket = new MulticastSocket(port);
             // Sender does not need to join the group
-            multicastSocket.setTimeToLive(32); // TODO: find best choice
+            multicastSocket.setTimeToLive(Constants.MULTICAST_TTL);
             DatagramPacket packet = new DatagramPacket(data, data.length, address, port);
             multicastSocket.send(packet);
             multicastSocket.close();

@@ -1,15 +1,13 @@
 package common;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 
 public class MyDatagramSocket extends DatagramSocket {
-    static final int BUFFER_LEN = 1024;
+    static final int BUFFER_LEN = 9999999;
 
     public MyDatagramSocket() throws SocketException {
         super();
@@ -29,19 +27,16 @@ public class MyDatagramSocket extends DatagramSocket {
     public void sendFile(InetAddress receiverHost, int receiverPort, String filePath)
             throws IOException {
         FileInputStream readFromDisk = new FileInputStream(filePath);
-
         // FIXME: replace file.length() to get exact size
-//        long fileSize = new File(filePath).length();
-        int count;
-        byte[] buffer = new byte[BUFFER_LEN];
-        while ((count = readFromDisk.read(buffer)) > 0) {
-            DatagramPacket datagram =
-                    new DatagramPacket(buffer,
-                            count,
-                            receiverHost,
-                            receiverPort);
-            this.send(datagram);
-        }
+        File file = new File(filePath);
+        byte[] buffer = new byte[(int) file.length()];
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
+        bufferedInputStream.read(buffer);
+        DatagramPacket datagram = new DatagramPacket(buffer,
+                buffer.length,
+                receiverHost,
+                receiverPort);
+        this.send(datagram);
     }
 
     public String receiveMessage() throws IOException {
@@ -53,19 +48,15 @@ public class MyDatagramSocket extends DatagramSocket {
 
     public void receiveFile(String newFileName, long numBytes)
             throws IOException {
+
         FileOutputStream writeToDisk = new FileOutputStream(newFileName);
+        byte[] buffer = new byte[(int) numBytes];
 
-        long bytesRead = 0;
-        while (bytesRead < numBytes) {
-            byte[] buffer = new byte[BUFFER_LEN];
-            DatagramPacket datagram = new DatagramPacket
-                    (buffer, Math.min(buffer.length, (int) (numBytes - bytesRead)));
-            this.receive(datagram);
+        DatagramPacket datagram = new DatagramPacket
+                (buffer, buffer.length);
+        this.receive(datagram);
 
-            bytesRead += buffer.length;
-            writeToDisk.write(buffer, 0, buffer.length);
-            writeToDisk.flush();
-        }
+        writeToDisk.write(datagram.getData());
         writeToDisk.flush();
         writeToDisk.close();
     }
