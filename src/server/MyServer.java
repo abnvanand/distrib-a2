@@ -194,26 +194,6 @@ public class MyServer {
         return portPool.remove(0);
     }
 
-/*    public int getFreeMulticastPort() {
-        int port = randPort(from, to);
-        while (true) {
-            if (isLocalPortFree(port)) {
-                return port;
-            } else {
-                port = ThreadLocalRandom.current().nextInt(from, to);
-            }
-        }
-    }
-
-    private boolean isLocalPortFree(int port) {
-        try {
-            new ServerSocket(port).close();
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
-    }*/
-
     public static void moveFile(MyStreamSocket dataSocket) throws IOException {
         String userName = dataSocket.receiveMessage();  // needs username to update userFilesMapping
         String source = dataSocket.receiveMessage();
