@@ -1,14 +1,19 @@
 package server;
 
+import common.Constants;
 import common.MyDatagramSocket;
 import common.MyStreamSocket;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Scanner;
@@ -17,12 +22,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import static common.Constants.UPLOAD_PATH;
 
 public class MyServer {
-    private static HashSet<String> userNames;
-    private static HashSet<String> groups;
+    private static HashSet<String> userNames = new HashSet<>();
+    private static HashSet<String> groups = new HashSet<>();
     // <Groupname, Users>
-    private static ConcurrentHashMap<String, HashSet<String>> groupUsersMapping;
+    private static ConcurrentHashMap<String, HashSet<String>> groupUsersMapping = new ConcurrentHashMap<>();
     // <Username, filepaths>
-    private static ConcurrentHashMap<String, HashSet<String>> userFilesMapping;
+    private static ConcurrentHashMap<String, HashSet<String>> userFilesMapping = new ConcurrentHashMap<>();
+    // <GroupName, Multicast Port>
+    private static HashMap<String, String> groupMulticastPort = new HashMap<>();
+    // List of available ports
+    private static ArrayList<Integer> portPool = new ArrayList<>();
 
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
@@ -39,10 +48,10 @@ public class MyServer {
             udpServerPort = "12346";
         }
 
-        userNames = new HashSet<>();
-        groups = new HashSet<>();
-        groupUsersMapping = new ConcurrentHashMap<>();
-        userFilesMapping = new ConcurrentHashMap<>();
+        // Fill portPool with some portnumber
+        // FIXME: some port might not be available
+        for (int i = 49152; i < 65535; i++)
+            portPool.add(i);
 
         try {
             ServerSocket myConnectionSocket = new ServerSocket(Integer.parseInt(serverPort));
@@ -132,7 +141,9 @@ public class MyServer {
                 .remove(userName);
         System.out.println("groupUsersMapping after: " + groupUsersMapping);
 
-        dataSocket.sendMessage("User: " + userName + " removed from Group: " + groupName);
+        System.out.println("User: " + userName + " removed from Group: " + groupName);
+        dataSocket.sendMessage("success");
+        dataSocket.sendMessage(groupMulticastPort.get(groupName));
     }
 
     public static void joinGroup(MyStreamSocket dataSocket)
@@ -152,7 +163,10 @@ public class MyServer {
         groupUsersMapping.get(groupName).add(userName);
         System.out.println("groupUsersMapping after: " + groupUsersMapping);
 
-        dataSocket.sendMessage("User: " + userName + " added to Group: " + groupName);
+        System.out.println("User: " + userName + " added to Group: " + groupName);
+        dataSocket.sendMessage("success");
+        // send a multicast port
+        dataSocket.sendMessage(groupMulticastPort.get(groupName));
     }
 
     public static void listGroups(MyStreamSocket dataSocket) throws IOException {
@@ -168,8 +182,37 @@ public class MyServer {
             groups.add(groupName);
             System.out.println("Group " + groupName + " created successfully.");
             dataSocket.sendMessage("Success");
+            // TODO: fill a hashmap
+            groupMulticastPort.put(groupName, String.valueOf(getFreeMulticastPort()));
         }
     }
+
+    private static int getFreeMulticastPort() {
+        if (portPool.size() <= 0)
+            return -1;
+
+        return portPool.remove(0);
+    }
+
+/*    public int getFreeMulticastPort() {
+        int port = randPort(from, to);
+        while (true) {
+            if (isLocalPortFree(port)) {
+                return port;
+            } else {
+                port = ThreadLocalRandom.current().nextInt(from, to);
+            }
+        }
+    }
+
+    private boolean isLocalPortFree(int port) {
+        try {
+            new ServerSocket(port).close();
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }*/
 
     public static void moveFile(MyStreamSocket dataSocket) throws IOException {
         String userName = dataSocket.receiveMessage();  // needs username to update userFilesMapping
@@ -246,7 +289,7 @@ public class MyServer {
         System.out.println("Uploading file to: " + fullPath);
 
         // TODO:
-         myDatagramSocket.receiveFile(fullPath, Long.parseLong(fileSize));
+        myDatagramSocket.receiveFile(fullPath, Long.parseLong(fileSize));
 
 //        System.out.println("myDatagramSocket.receiveMessage(): " + myDatagramSocket.receiveMessage());
 
@@ -275,6 +318,34 @@ public class MyServer {
 
             System.out.println("User created: " + newUser);
             dataSocket.sendMessage("Success: user " + newUser + " created successfully.");
+        }
+    }
+
+    public static void shareMsg(MyStreamSocket dataSocket) throws IOException {
+        String userName = dataSocket.receiveMessage();
+        String groupName = dataSocket.receiveMessage();
+        String message = dataSocket.receiveMessage();
+        // TODO: do sanity check of userName/groupName
+        // FIXME: remove hardcoded port
+        String multicastPort = groupMulticastPort.get(groupName);
+        broadcastMsg(multicastPort, userName, groupName, message);
+    }
+
+    private static void broadcastMsg(String multicastPort, String userName, String groupName, String message) {
+        // data=> username[groupName]: message
+        byte[] data = String.format("%s[%s]: %s", userName, groupName, message).getBytes();
+        int port = Integer.parseInt(multicastPort);
+        try {
+            InetAddress address = InetAddress.getByName(Constants.MULTICAST_ADDRESS);
+
+            MulticastSocket multicastSocket = new MulticastSocket(port);
+            // Sender does not need to join the group
+            multicastSocket.setTimeToLive(32); // TODO: find best choice
+            DatagramPacket packet = new DatagramPacket(data, data.length, address, port);
+            multicastSocket.send(packet);
+            multicastSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

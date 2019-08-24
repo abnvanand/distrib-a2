@@ -15,9 +15,11 @@ public class Constants {
         public static final String LIST_DETAIL = "list_detail";
         public static final String GET_FILE = "get_file";
         public static final String UPLOAD_UDP = "upload_udp";
+        public static final String SHARE_MSG = "share_msg";
 
         public static final String QUIT = "quit";
     }
 
     public static final String UPLOAD_PATH = "uploads";
+    public static final String MULTICAST_ADDRESS = "239.1.2.3"; // TODO: Set by scanner.in
 }

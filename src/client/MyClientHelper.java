@@ -7,6 +7,7 @@ import common.MyStreamSocket;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.HashMap;
 
 public class MyClientHelper {
     private String myUserName;
@@ -14,6 +15,8 @@ public class MyClientHelper {
     private String serverHost;
     private String serverPort;
     private String serverUDPPort;
+    // <GroupName, Thread>
+    private HashMap<String, Thread> groupChatThreads = new HashMap<>();
 
     MyClientHelper(String serverHost, String serverPort, String serverUDPPort) throws IOException {
         this.dataSocket = new MyStreamSocket(
@@ -66,7 +69,21 @@ public class MyClientHelper {
         this.dataSocket.sendMessage(Constants.MessageTypes.LEAVE_GROUP);
         this.dataSocket.sendMessage(userName);
         this.dataSocket.sendMessage(groupName);
-        System.out.println(this.dataSocket.receiveMessage());
+        String response = this.dataSocket.receiveMessage();
+        if (response.equalsIgnoreCase("success")) {
+            System.out.println("here1");
+            String groupPort = this.dataSocket.receiveMessage();
+            System.out.println("here2" + groupPort);
+            // TODO: finish thread of corresponding group
+            Thread thread = groupChatThreads.get(groupName);
+            System.out.println("here3");
+            thread.interrupt();
+            System.out.println("here4");
+            groupChatThreads.remove(groupName);
+
+        } else {
+            System.out.println("Here else");
+        }
     }
 
     public void joinGroup(String userName, String groupName)
@@ -74,7 +91,21 @@ public class MyClientHelper {
         this.dataSocket.sendMessage(Constants.MessageTypes.JOIN_GROUP);
         this.dataSocket.sendMessage(userName);
         this.dataSocket.sendMessage(groupName);
-        System.out.println(this.dataSocket.receiveMessage());
+        String response = this.dataSocket.receiveMessage();
+        if (!response.equalsIgnoreCase("success")) {
+            System.out.println(response);
+            return;
+        }
+        // else get group's port number
+        String multicastPort = this.dataSocket.receiveMessage();
+
+        // Read msgs on separate thread
+        // TODO: Find a way to finish this thread when user leaves the group
+        Thread theThread = new Thread(new ReadThread(
+                InetAddress.getByName(Constants.MULTICAST_ADDRESS),
+                Integer.parseInt(multicastPort)));
+        groupChatThreads.put(groupName, theThread);
+        theThread.start();
     }
 
     public void listGroups()
@@ -155,5 +186,13 @@ public class MyClientHelper {
     public void done() throws IOException {
         this.dataSocket.sendMessage(Constants.MessageTypes.QUIT);
         this.dataSocket.close();
+    }
+
+    public void shareMsg(String myUserName, String groupName, String message) throws IOException {
+        this.dataSocket.sendMessage(Constants.MessageTypes.SHARE_MSG);
+        this.dataSocket.sendMessage(myUserName);
+        this.dataSocket.sendMessage(groupName);
+        this.dataSocket.sendMessage(message);   // client sends msg to server over TCP
+        // server multicasts that msg to the group
     }
 }

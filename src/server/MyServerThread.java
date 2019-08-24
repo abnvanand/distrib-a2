@@ -51,6 +51,8 @@ public class MyServerThread implements Runnable {
                     MyServer.getFile(dataSocket);
                 } else if (Constants.MessageTypes.UPLOAD_UDP.equals(msgType)) {
                     MyServer.uploadUdp(dataSocket, myDatagramSocket);
+                } else if (Constants.MessageTypes.SHARE_MSG.equals(msgType)) {
+                    MyServer.shareMsg(dataSocket);
                 }
 
             } catch (IOException e) {

@@ -4,6 +4,7 @@ import common.Constants;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Scanner;
 
 import static common.Constants.UPLOAD_PATH;
@@ -90,6 +91,15 @@ public class MyClient {
                         File f = new File(split[1]);
 
                         helper.uploadUdp(helper.getMyUserName(), f.getName(), split[1], f.length());
+                    } else if (Constants.MessageTypes.SHARE_MSG.equals(msgType)) {
+                        String groupName = split[1];
+                        String msg = split[2];
+                        if (groupName.trim().isEmpty()) {
+                            System.out.println("Usage: share_msg `groupName` `message text`");
+                            continue;   //  can't send msg without group name
+                        }
+
+                        helper.shareMsg(helper.getMyUserName(), groupName, msg);
                     }
                 } catch (IOException e) {
                     System.out.println(e.getLocalizedMessage());
