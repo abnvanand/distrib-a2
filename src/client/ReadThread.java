@@ -6,7 +6,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 
 public class ReadThread implements Runnable {
-    static final int MAX_LEN = 30;
+    static final int MAX_LEN = 300;
     private InetAddress groupAddress;
     private int port;
     private MulticastSocket multicastSocket = null;
