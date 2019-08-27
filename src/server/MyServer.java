@@ -34,6 +34,9 @@ public class MyServer {
     private static ArrayList<Integer> portPool = new ArrayList<>();
 
     public static void main(String[] args) {
+        File uploadFolder = new File(UPLOAD_PATH);
+        uploadFolder.mkdir();
+
         Scanner in = new Scanner(System.in);
 
         System.out.println("Enter server port (default 12345)");
