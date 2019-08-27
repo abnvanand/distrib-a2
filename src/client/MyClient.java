@@ -4,15 +4,10 @@ import common.Constants;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.Scanner;
-
-import static common.Constants.UPLOAD_PATH;
 
 public class MyClient {
     public static void main(String[] args) {
-        File uploadFolder = new File(UPLOAD_PATH);
-        uploadFolder.mkdir();
 
         Scanner in = new Scanner(System.in);
 
@@ -93,13 +88,17 @@ public class MyClient {
                         helper.uploadUdp(helper.getMyUserName(), f.getName(), split[1], f.length());
                     } else if (Constants.MessageTypes.SHARE_MSG.equals(msgType)) {
                         String groupName = split[1];
-                        String msg = split[2];
+                        StringBuilder msg = new StringBuilder();
+                        for (int i = 2; i < split.length; i++) {
+                            msg.append(split[i]).append(" ");
+                        }
+                        System.out.println("msg typed:" + msg);
                         if (groupName.trim().isEmpty()) {
                             System.out.println("Usage: share_msg `groupName` `message text`");
                             continue;   //  can't send msg without group name
                         }
 
-                        helper.shareMsg(helper.getMyUserName(), groupName, msg);
+                        helper.shareMsg(helper.getMyUserName(), groupName, msg.toString().strip());
                     }
                 } catch (IOException e) {
 //                    e.printStackTrace();
