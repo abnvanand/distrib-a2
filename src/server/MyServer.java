@@ -314,8 +314,14 @@ public class MyServer {
         String userName = dataSocket.receiveMessage();
         String groupName = dataSocket.receiveMessage();
         String message = dataSocket.receiveMessage();
-        // TODO: do sanity check of userName/groupName
+
+        if (!userNames.contains(userName)
+                || !groups.contains(groupName))
+            return;
+
         String multicastPort = groupMulticastPort.get(groupName);
+        if (multicastPort == null)
+            return;
         broadcastMsg(multicastPort, userName, groupName, message);
     }
 
