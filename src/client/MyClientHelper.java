@@ -71,18 +71,11 @@ public class MyClientHelper {
         this.dataSocket.sendMessage(groupName);
         String response = this.dataSocket.receiveMessage();
         if (response.equalsIgnoreCase("success")) {
-            System.out.println("here1");
             String groupPort = this.dataSocket.receiveMessage();
-            System.out.println("here2" + groupPort);
             // TODO: finish thread of corresponding group
             Thread thread = groupChatThreads.get(groupName);
-            System.out.println("here3");
             thread.interrupt();
-            System.out.println("here4");
             groupChatThreads.remove(groupName);
-
-        } else {
-            System.out.println("Here else");
         }
     }
 
